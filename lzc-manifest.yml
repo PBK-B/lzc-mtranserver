@@ -1,0 +1,50 @@
+lzc-sdk-version: '0.1'
+name: MTranServer
+package: cloud.lazycat.app.mtranserver
+version: 3.1.5-selfhost
+description: 一个超低资源消耗超快的离线翻译服务器
+homepage: https://github.com/xxnuo/MTranServer
+usage: 请在浏览器打开应用，通过程序域名+/help获取使用帮助
+author: xxnuo
+application:
+  subdomain: mtranserver
+  background_task: true
+  multi_instance: false
+  gpu_accel: false
+  kvm_accel: false
+  usb_accel: false
+  handlers:
+    error_page_templates:
+      '404': /lzcapp/pkg/content/errors/404.html.tpl
+  public_path:
+    - /
+  routes:
+    - /=http://mtranserver.cloud.lazycat.app.mtranserver.lzcapp:8989/
+    - /help=file:///lzcapp/pkg/content/
+    - /playground=file:///lzcapp/pkg/content/playground.html
+services:
+  mtranserver:
+    mark: 3.1.5
+    image: registry.lazycat.cloud/u7842111934/xxnuo/mtranserver:da6f9e16ae840138
+    binds:
+      - /lzcapp/var/config:/app/config
+      - /lzcapp/var/models:/app/models
+    environment:
+      - "MT_LOG_LEVEL=info"
+      - "MT_CONFIG_DIR=/app/config"
+      - "MT_MODEL_DIR=/app/models"
+      - "MT_WORKER_IDLE_TIMEOUT=900"
+    setup_script: |
+      if [ -z "$(find /app/config/config.ini -mindepth 1 -maxdepth 1)" ]; then
+        cp  /lzcapp/pkg/content/config.ini /app/config/config.ini
+      fi
+      ln -sf /app/config/config.ini /app/config.ini
+      if [ ! -d /app/models/enzh ];then
+        cp -r /lzcapp/pkg/content/models/enzh /app/models/
+      fi
+      if [ ! -d /app/models/zhen ];then
+        cp -r /lzcapp/pkg/content/models/zhen /app/models/
+      fi
+unsupported_platforms:
+  - ios
+  - android

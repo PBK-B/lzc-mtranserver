@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mtrans Playground</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --background: #ecf0f1;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', system-ui, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background: var(--background);
+        }
+
+        .config-bar {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .url-input {
+            padding: 0.8rem;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .url-input:focus {
+            border-color: var(--secondary);
+            outline: none;
+        }
+
+        .save-btn {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+        }
+
+        .save-btn:hover {
+            background: #2980b9;
+            transform: translateY(-1px);
+        }
+
+        .model-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .model-selector {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--secondary);
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            appearance: none;
+            background: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232c3e50'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e") no-repeat right 1rem center/12px;
+        }
+
+        .translation-pane {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .text-area {
+            position: relative;
+            height: 300px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100%;
+            padding: 1.5rem;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            resize: none;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            border-color: var(--secondary);
+            outline: none;
+        }
+
+        .lang-tag {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--secondary);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+
+        .settings {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .token-input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="config-bar">
+        <input type="url" id="base-url" class="url-input" 
+               placeholder="请输入服务器地址（例如：http://api.example.com）">
+        <button onclick="saveConfig()" class="save-btn">保存配置</button>
+    </div>
+
+    <div class="model-card">
+        <select id="model-select" class="model-selector">
+            <option value="">正在加载翻译模型...</option>
+        </select>
+
+        <div class="translation-pane">
+            <div class="text-area">
+                <div class="lang-tag" id="source-lang">源</div>
+                <textarea id="source-text" placeholder="请输入要翻译的文本（支持实时输入）"></textarea>
+            </div>
+            
+            <div class="text-area">
+                <div class="lang-tag" id="target-lang">目标</div>
+                <textarea id="translated-text" 
+                         placeholder="翻译结果将在此显示" 
+                         readonly></textarea>
+            </div>
+        </div>
+
+        <div class="settings">
+            <input type="password" id="api-token" class="token-input" 
+                  placeholder="请输入API密钥（可选）">
+            <button onclick="saveToken()" class="save-btn">保存密钥</button>
+        </div>
+    </div>
+
+    <script>
+        // 语言代码映射表（支持扩展）
+        const LANG_MAP = {
+            'zh': { code: 'zh', name: '中文', native: '中文' },
+            'en': { code: 'en', name: '英文', native: 'English' },
+            'ja': { code: 'ja', name: '日文', native: '日本語' },
+            'ko': { code: 'ko', name: '韩文', native: '한국어'},
+            'fr': { code: 'fr', name: '法文', native: 'Français'},
+            'es': { code: 'es', name: '西班牙文', native: 'Español'},
+            'ru': { code: 'ru', name: '俄文', native: 'Русский'},
+        };
+
+        // 配置管理
+        let BASE_URL = localStorage.getItem('base-url') || window.location.origin;
+        document.getElementById('base-url').value = BASE_URL;
+
+        function saveConfig() {
+            const newUrl = document.getElementById('base-url').value.trim();
+            if (newUrl) {
+                BASE_URL = newUrl.replace(/\/$/, '');
+                localStorage.setItem('base-url', BASE_URL);
+                showToast('配置已保存！');
+                loadModels();
+            }
+        }
+
+        // 密钥管理
+        function saveToken() {
+            const token = document.getElementById('api-token').value.trim();
+            if (token) {
+                localStorage.setItem('translation-token', token);
+                showToast('密钥已保存！');
+            }
+        }
+
+        // 模型加载
+        async function loadModels() {
+            const modelSelect = document.getElementById('model-select');
+            modelSelect.disabled = true;
+            
+            try {
+                const response = await fetch(`${BASE_URL}/models`, {
+                    headers: getAuthHeader()
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (!data.models || !Array.isArray(data.models)) {
+                    throw new Error('无效的响应格式');
+                }
+
+                populateModels(data.models);
+                modelSelect.disabled = false;
+            } catch (error) {
+                modelSelect.innerHTML = `<option value="">加载失败: ${error.message}</option>`;
+                console.error('模型加载错误:', error);
+            }
+        }
+
+        function populateModels(modelCodes) {
+            const modelSelect = document.getElementById('model-select');
+            modelSelect.innerHTML = modelCodes.map(code => {
+                const fromCode = code.slice(0,2);
+                const toCode = code.slice(2);
+                const from = LANG_MAP[fromCode]?.name || fromCode.toUpperCase();
+                const to = LANG_MAP[toCode]?.name || toCode.toUpperCase();
+                return `<option value="${code}">${from} → ${to}</option>`;
+            }).join('');
+
+            modelSelect.onchange = function() {
+                updateLanguageTags(this.value);
+                translateText();
+            };
+        }
+
+        // 语言标签更新
+        function updateLanguageTags(modelCode) {
+            const fromCode = modelCode.slice(0,2);
+            const toCode = modelCode.slice(2);
+            
+            const sourceLang = LANG_MAP[fromCode]?.native || fromCode.toUpperCase();
+            const targetLang = LANG_MAP[toCode]?.native || toCode.toUpperCase();
+            
+            document.getElementById('source-lang').textContent = sourceLang;
+            document.getElementById('target-lang').textContent = targetLang;
+        }
+
+        // 翻译功能
+        let debounceTimer;
+        document.getElementById('source-text').oninput = function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(translateText, 500);
+        };
+
+        async function translateText() {
+            const sourceText = document.getElementById('source-text').value.trim();
+            const modelCode = document.getElementById('model-select').value;
+            const targetElement = document.getElementById('translated-text');
+
+            if (!sourceText || !modelCode) {
+                targetElement.value = '';
+                return;
+            }
+
+            try {
+                const from = modelCode.slice(0,2);
+                const to = modelCode.slice(2);
+
+                const response = await fetch(`${BASE_URL}/translate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeader()
+                    },
+                    body: JSON.stringify({
+                        from,
+                        to,
+                        text: sourceText
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || '翻译服务错误');
+                }
+
+                const result = await response.json();
+                targetElement.value = result.result;
+            } catch (error) {
+                targetElement.value = `[错误] ${error.message}`;
+                console.error('翻译错误:', error);
+            }
+        }
+
+        // 工具函数
+        function getAuthHeader() {
+            const token = localStorage.getItem('translation-token');
+            return token ? { 'Authorization': token } : {};
+        }
+
+        function showToast(message, duration=2000) {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.background = 'rgba(0,0,0,0.8)';
+            toast.style.color = 'white';
+            toast.style.padding = '12px 24px';
+            toast.style.borderRadius = '8px';
+            toast.style.zIndex = 1000;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), duration);
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadModels();
+            document.getElementById('api-token').value = localStorage.getItem('translation-token') || '';
+        });
+    </script>
+</body>
+</html>

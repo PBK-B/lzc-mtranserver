@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MTranServer 使用说明</title>
+    <style>
+        /* Reset 样式 */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        body, h1, h2, h3, h4, h5, h6, p, ul, ol, li, pre, code, table, th, td {
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; /* 使用系统默认字体，苹果风格 */
+            line-height: 1.7;
+            color: #333; /* 深灰色文本 */
+            background-color: #f9f9f9; /* 浅灰色背景 */
+            padding: 20px;
+            word-wrap: break-word; /* 防止长单词溢出 */
+        }
+        h1 {
+            font-size: 2.5em;
+            font-weight: 600; /* 稍粗的字重 */
+            margin-bottom: 30px;
+            color: #222; /* 更深的灰色标题 */
+        }
+        h2 {
+            font-size: 1.8em;
+            font-weight: 600;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            color: #222;
+        }
+        h3 {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        p {
+            font-size: 1em;
+            margin-bottom: 15px;
+            color: #444; /* 稍浅的段落文本 */
+        }
+        code {
+            font-family: Menlo, Monaco, Consolas, "Courier New", monospace; /* 等宽字体 */
+            background-color: #f0f0f0; /* 浅灰色代码背景 */
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            color: #333;
+        }
+        pre {
+            font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            font-size: 0.9em;
+            color: #333;
+        }
+        ul, ol {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+        li {
+            margin-bottom: 8px;
+            font-size: 1em;
+            color: #444;
+        }
+        ul {
+            list-style-type: disc; /* 实心圆点 */
+        }
+        ol {
+            list-style-type: decimal; /* 数字编号 */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            border-spacing: 0; /* 去除单元格间距 */
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd; /* 更细的边框 */
+        }
+        th {
+            background-color: #f2f2f2; /* 浅灰色表头背景 */
+            font-weight: 500; /* 稍轻的表头字重 */
+            color: #333;
+        }
+        tr:last-child td { /* 移除表格最后一行底部的边框 */
+            border-bottom: none;
+        }
+        a {
+            color: #007bff; /* 柔和的蓝色链接 */
+            text-decoration: none;
+            font-weight: 500;
+        }
+        a:hover {
+            text-decoration: underline; /* 鼠标悬停时显示下划线 */
+        }
+        .dynamic-url {
+            font-weight: 600; /* 更粗的动态 URL */
+            color: #007bff; /* 蓝色动态 URL */
+        }
+        .container { /* 限制内容宽度，居中显示 */
+            max-width: 960px;
+            margin: 0 auto;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        /* 响应式调整 (简单示例) */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 2em;
+                margin-bottom: 20px;
+            }
+            h2 {
+                font-size: 1.6em;
+                margin-top: 30px;
+                margin-bottom: 15px;
+            }
+            h3 {
+                font-size: 1.2em;
+                margin-top: 25px;
+                margin-bottom: 10px;
+            }
+            p, li, code, pre, th, td, a {
+                font-size: 0.95em;
+            }
+            pre, code {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MTranServer 使用说明</h1>
+
+        <p>MTranServer 是一个超低资源消耗、超快的离线翻译服务器，支持多种语言的翻译，翻译质量与 Google 翻译相当。</p>
+
+        <p>当前服务器地址： <span id="current-url" class="dynamic-url"></span></p>
+
+        <h2>API 接口说明</h2>
+
+        <p>注意： 请使用上方动态显示的 <span class="dynamic-url">当前服务器地址</span>来进行api访问。</p>
+        <p>已经默认集成中文-英文 英文-中文模型，如果需要更多模型，请到<a href="https://ocn4e4onws23.feishu.cn/drive/folder/C3kffkLr8lxdtid5GYicAcFAnTh"> 飞书</a>或者<a href="https://github.com/xxnuo/MTranServer/releases/tag/models" >Github</a>下载模型，并放在应用数据下的models目录</p>
+        <p>
+            按需要下载模型后，解压每个语言的压缩包到 models 文件夹内。 下载了英译中模型的当前文件夹结构示意图：
+        </p>
+        <pre><code>
+ models/
+├── enzh
+│   ├── lex.50.50.enzh.s2t.bin
+│   ├── model.enzh.intgemm.alphas.bin
+│   └── vocab.enzh.spm
+        </code>
+        </pre>
+        <h3>Token 设置</h3>
+        <p>在 MTranServer 中，token 用于保护 API 的安全访问。以下是如何设置和使用 token 的步骤：</p>
+
+        <h4>配置 Token</h4>
+        <p>在应用数据config目录下的 <code>config.ini</code> 文件中设置 <code>CORE_API_TOKEN</code> 值。例如：</p>
+        <pre><code>
+CORE_API_TOKEN=your_secret_token
+        </code></pre>
+        <p>将 `your_secret_token` 替换为您自己的安全密码。</p>
+
+        <h4>使用 Token</h4>
+        <p>在请求 MTranServer 的 API 时，需要在 URL 中包含 token。例如，访问沉浸式翻译接口时：</p>
+        <pre><code class="api-url">
+http://localhost:8989/imme?token=your_secret_token
+        </code></pre>
+        <p>将 `<code class="api-url">http://localhost:8989</code>` 替换为 <span class="dynamic-url">当前服务器地址</span>，并将 `your_secret_token` 替换为您在 `config.ini` 中设置的值。</p>
+
+        <h4>认证头</h4>
+        <p>对需要认证的 API 请求，您可以在 HTTP 请求头中包含 token。例如，在 <code>Authorization</code> 头中使用：</p>
+        <pre><code>
+Authorization: your_secret_token
+        </code></pre>
+
+        <h3>翻译插件接口</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>名称</th>
+                    <th>URL</th>
+                    <th>插件设置</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>沉浸式翻译无密码</td>
+                    <td><code class="api-url">http://localhost:8989/imme</code></td>
+                    <td><code>自定义API 设置</code> - <code>API URL</code></td>
+                </tr>
+                <tr>
+                    <td>沉浸式翻译有密码</td>
+                    <td><code class="api-url">http://localhost:8989/imme?token=your_token</code></td>
+                    <td>同上，将 <code>your_token</code> 替换为您的 <code>CORE_API_TOKEN</code> 值</td>
+                </tr>
+                <tr>
+                    <td>简约翻译无密码</td>
+                    <td><code class="api-url">http://localhost:8989/kiss</code></td>
+                    <td><code>接口设置</code> - <code>Custom</code> - <code>URL</code></td>
+                </tr>
+                <tr>
+                    <td>简约翻译有密码</td>
+                    <td><code class="api-url">http://localhost:8989/kiss</code></td>
+                    <td>同上，需要 <code>KEY</code> 填 <code>your_token</code></td>
+                </tr>
+                <tr>
+                    <td>划词翻译无密码</td>
+                    <td><code class="api-url">http://localhost:8989/hcfy</code></td>
+                    <td><code>设置</code>-<code>其他</code>-<code>自定义翻译源</code>-<code>接口地址</code></td>
+                </tr>
+                <tr>
+                    <td>划词翻译有密码</td>
+                    <td><code class="api-url">http://localhost:8989/hcfy?token=your_token</code></td>
+                    <td><code>设置</code>-<code>其他</code>-<code>自定义翻译源</code>-<code>接口地址</code></td>
+                </tr>
+            </tbody>
+        </table>
+        <h3>翻译插件配置说明</h3>
+
+        <h4>沉浸式翻译设置步骤：</h4>
+        <ol>
+            <li>进入插件设置页面</li>
+            <li>在开发者模式中启用Beta特性</li>
+            <li>找到<code>翻译服务</code> → <code>自定义API设置</code></li>
+            <li>配置参数建议：
+                <ul>
+                    <li>每秒最大请求数：设置为 <code>5000</code>（根据服务器性能调整）</li>
+                    <li>每次请求最大段落数：建议设置为 <code>10</code></li>
+                </ul>
+            </li>
+            <li>保存设置后即可体验高速翻译</li>
+        </ol>
+
+        <h4>简约翻译设置步骤：</h4>
+        <ol>
+            <li>进入插件设置页面</li>
+            <li>找到<code>接口设置</code> → <code>Custom</code></li>
+            <li>配置参数建议：
+                <ul>
+                    <li>最大请求并发数量：建议 <code>100</code></li>
+                    <li>每次请求间隔时间：设置为 <code>1</code> 毫秒</li>
+                </ul>
+            </li>
+            <li>在<code>KEY</code>字段填入您的token（如果使用有密码接口）</li>
+            <li>保存配置即可开始使用</li>
+        </ol>
+        <p><strong>注意：</strong>以上数值基于标准服务器配置，请根据实际硬件性能调整参数。建议从较低数值开始测试，逐步增加至最优性能。</p>
+        <h3>开发者接口</h3>
+        <p>Base URL: <code class="api-url">http://localhost:8989</code></p>
+        <table>
+            <thead>
+                <tr>
+                    <th>名称</th>
+                    <th>URL</th>
+                    <th>请求格式</th>
+                    <th>返回格式</th>
+                    <th>认证头</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>服务版本</td>
+                    <td><code class="api-url">/version</code></td>
+                    <td>无</td>
+                    <td>无</td>
+                    <td>无</td>
+                </tr>
+                <tr>
+                    <td>语言对列表</td>
+                    <td><code class="api-url">/models</code></td>
+                    <td>无</td>
+                    <td>无</td>
+                    <td><code>Authorization: your_token</code></td>
+                </tr>
+                <tr>
+                    <td>普通翻译接口</td>
+                    <td><code class="api-url">/translate</code></td>
+                    <td><code>{"from": "en", "to": "zh", "text": "Hello, world!"}</code></td>
+                    <td><code>{"result": "你好，世界！"}</code></td>
+                    <td><code>Authorization: your_token</code></td>
+                </tr>
+                <tr>
+                    <td>批量翻译接口</td>
+                    <td><code class="api-url">/translate/batch</code></td>
+                    <td><code>{"from": "en", "to": "zh", "texts": ["Hello, world!", "Hello, world!"]}</code></td>
+                    <td><code>{"results": ["你好，世界！", "你好，世界！"]}</code></td>
+                    <td><code>Authorization: your_token</code></td>
+                </tr>
+                <tr>
+                    <td>健康检查</td>
+                    <td><code class="api-url">/health</code></td>
+                    <td>无</td>
+                    <td><code>{"status": "ok"}</code></td>
+                    <td>无</td>
+                </tr>
+                <tr>
+                    <td>心跳检查</td>
+                    <td><code class="api-url">/__heartbeat__</code></td>
+                    <td>无</td>
+                    <td><code>Ready</code></td>
+                    <td>无</td>
+                </tr>
+                <tr>
+                    <td>负载均衡心跳检查</td>
+                    <td><code class="api-url">/__lbheartbeat__</code></td>
+                    <td>无</td>
+                    <td><code>Ready</code></td>
+                    <td>无</td>
+                </tr>
+                <tr>
+                    <td>谷歌翻译兼容接口 1</td>
+                    <td><code class="api-url">/language/translate/v2</code></td>
+                    <td>{"q": "The Great Pyramid of Giza", "source": "en", "target": "zh", "format": "text"}</td>
+                    <td><code>{"data": {"translations": [{"translatedText": "吉萨大金字塔"}]}}</code></td>
+                    <td>Authorization: your_token</td>
+                </tr>
+            </tbody>
+        </table>
+        <h3>在线体验</h3>
+        <p>请访问<a href="/playground" target="_blank">Playground</a>在线体验</p>
+        <h3>示例代码</h3>
+        <p>以下是使用 Python 的 <code>requests</code> 库发送带有 token 的请求的示例：</p>
+        <pre><code class="api-url">
+import requests
+
+# 设置 token
+token = "your_secret_token"
+
+# 设置 API URL
+url = f"http://localhost:8989/imme?token={token}"
+
+# 或者在头部传递 token
+headers = {"Authorization": token}
+url = "http://localhost:8989/imme"
+
+# 发送请求
+response = requests.get(url, headers=headers if headers else None)
+
+# 处理响应
+print(response.text)
+        </code></pre>
+
+        <p>更多信息请参考 <a href="https://github.com/xxnuo/MTranServer">GitHub 仓库</a>。</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentUrlSpan = document.getElementById('current-url');
+            const placeholderUrlCode = document.getElementById('placeholder-url');
+            const apiUrlCodes = document.querySelectorAll('.api-url');
+
+            if (currentUrlSpan) {
+                currentUrlSpan.textContent = window.location.origin;
+
+                const dynamicURL = window.location.origin ;
+                placeholderUrlCode.textContent = dynamicURL;
+                apiUrlCodes.forEach(codeElement => {
+                    codeElement.textContent = codeElement.textContent.replace('http://localhost:8989', dynamicURL);
+                });
+            }
+        });
+    </script>
+
+</body>
+</html>
