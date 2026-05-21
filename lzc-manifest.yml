@@ -1,7 +1,7 @@
 lzc-sdk-version: '0.1'
 name: MTranServer
 package: cloud.lazycat.app.mtranserver
-version: 3.1.5-selfhost
+version: 4.0.33-selfhost
 description: 一个超低资源消耗超快的离线翻译服务器
 homepage: https://github.com/xxnuo/MTranServer
 usage: 请在浏览器打开应用，通过程序域名+/help获取使用帮助
@@ -24,8 +24,8 @@ application:
     - /playground=file:///lzcapp/pkg/content/playground.html
 services:
   mtranserver:
-    mark: 3.1.5
-    image: registry.lazycat.cloud/u7842111934/xxnuo/mtranserver:da6f9e16ae840138
+    mark: 4.0.33
+    image: registry.lazycat.cloud/u7842111934/xxnuo/mtranserver:3bcaab6eedf0be9c
     binds:
       - /lzcapp/var/config:/app/config
       - /lzcapp/var/models:/app/models
@@ -33,7 +33,7 @@ services:
       - "MT_LOG_LEVEL=info"
       - "MT_CONFIG_DIR=/app/config"
       - "MT_MODEL_DIR=/app/models"
-      - "MT_WORKER_IDLE_TIMEOUT=900"
+      - "MT_WORKER_IDLE_TIMEOUT=2700"
     setup_script: |
       if [ -z "$(find /app/config/config.ini -mindepth 1 -maxdepth 1)" ]; then
         cp  /lzcapp/pkg/content/config.ini /app/config/config.ini
