@@ -1,0 +1,28 @@
+{
+    "identifier": "com.mtranserver.translate",
+    "version": "1.1.1",
+    "category": "translate",
+    "name": "MTranServer翻译",
+    "summary": "MTranServer翻译服务",
+    "icon": "icon.png",
+    "author": "MTranServer Plugin",
+    "homepage": "https://github.com/xxnuo/MTranServer",
+    "appcast": "https://raw.githubusercontent.com/xxnuo/MTranServer/main/appcast.json",
+    "minBobVersion": "0.5.0",
+    "options": [
+        {
+            "identifier": "apiUrl",
+            "type": "text",
+            "title": "API地址",
+            "desc": "MTranServer API地址，例如：https://mtranserver.xxx.xyz",
+            "default": "https://mtranserver.xxx.xyz"
+        },
+        {
+            "identifier": "token",
+            "type": "text",
+            "title": "API Token",
+            "desc": "MTranServer API Token，如果服务器未设置token可留空",
+            "default": ""
+        }
+    ]
+}
